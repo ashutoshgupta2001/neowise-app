@@ -1,8 +1,9 @@
 from flask import jsonify, request, session
 import os
 from datetime import date
-from app import app, db
+from app import app, db, redis_client
 import uuid
+import json
 from .models import Users, Transactions
 
 def generate_id():
@@ -72,10 +73,19 @@ def get_transactions():
 #Route to get a specific transaction by ID
 @app.route('/transactions/<transaction_id>', methods=['GET','DELETE'])
 def get_transaction(transaction_id):
-    if request.method == 'GET':
-        transactions = Transactions.query.filter_by(transaction_id=transaction_id).all()
-        if transactions:
-            transactions_data = [
+    redis_key = f"transaction:{transaction_id}"
+    if request.method == 'GET': 
+        transaction_data_json = redis_client.get(redis_key)
+        if transaction_data_json:
+         # Convert JSON string back to Python dictionary
+            transaction_data = json.loads(transaction_data_json)
+            print("//////////////",transaction_data)
+            return transaction_data
+
+        else:
+        # when transaction data is not found in Redis
+            transactions = Transactions.query.filter_by(transaction_id=transaction_id).all()
+            transaction_data = [
         {
             'transaction_id': transaction.transaction_id,
             'details': transaction.details,
@@ -84,8 +94,10 @@ def get_transaction(transaction_id):
             'receiver_id': transaction.receiver_id
         }
         for transaction in transactions
-    ]
-            return jsonify(transactions_data)
+    ]   
+            transaction_data_json = json.dumps(transaction_data)
+            redis_client.set(redis_key, transaction_data_json)
+            return jsonify(transaction_data)
         
         return jsonify({"error": "transaction not found"}), 404
     
