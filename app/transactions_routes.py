@@ -9,7 +9,7 @@ from .models import Users, Transactions
 def generate_id():
     return str(uuid.uuid4())
 
-@app.route('/transactions/', methods=['GET','POST'])
+@app.route('/api/transactions/', methods=['GET','POST'])
 def get_transactions():
     if request.method == 'GET': 
         transactions = Transactions.query.all()
@@ -26,6 +26,7 @@ def get_transactions():
         return jsonify(transactions_data)
     if request.method == 'POST':
         request_data = request.json
+        print("request_data", request_data)
         details = request_data.get('details')
         amount = request_data.get('amount')
         sender_id = request_data.get('senderId')
@@ -33,12 +34,12 @@ def get_transactions():
 
         receiver = Users.query.filter_by(id=receiver_id).first()
         sender = Users.query.filter_by(id=sender_id).first()
-
+        print("............",receiver)
         if not receiver:
             return {
                 "success": False,
                 "message": "Receiver not found for provided receiverId"
-            }
+            },400
 
         try:
             if int(sender.balance) >= int(amount):
@@ -71,7 +72,7 @@ def get_transactions():
 
 
 #Route to get a specific transaction by ID
-@app.route('/transactions/<transaction_id>', methods=['GET','DELETE'])
+@app.route('/api/transactions/<transaction_id>', methods=['GET','DELETE'])
 def get_transaction(transaction_id):
     redis_key = f"transaction:{transaction_id}"
     if request.method == 'GET': 
@@ -130,6 +131,6 @@ def get_transaction(transaction_id):
             return {
                 "success" : False,
                 "message" : "No transaction found for this transaction id"
-            }
+            }, 400
 
 

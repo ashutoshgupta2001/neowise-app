@@ -6,7 +6,7 @@ import json
 from .models import Users, Transactions
 
 
-@app.route('/users/', methods=['GET'])
+@app.route('/api/users/', methods=['GET'])
 def get_users():
     if request.method == 'GET': 
         users = Users.query.all()
@@ -21,7 +21,7 @@ def get_users():
         return jsonify(users_data)
 
 # Route to get a specific user by ID
-@app.route('/users/<user_id>', methods=['GET'])
+@app.route('/api/users/<user_id>', methods=['GET'])
 def get_user(user_id):
     if request.method == 'GET':
         users = Users.query.filter_by(id=user_id).all()
@@ -38,7 +38,7 @@ def get_user(user_id):
         
         return jsonify({"error": "transaction not found"}), 404
 
-@app.route('/users/<user_id>/transactions', methods=['GET'])
+@app.route('/api/users/<user_id>/transactions', methods=['GET'])
 def get_user_transactions(user_id):
     if request.method == 'GET':
         transactions = Transactions.query.filter((Transactions.sender_id==user_id)|(Transactions.receiver_id==user_id)).all()
